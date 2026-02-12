@@ -1,0 +1,30 @@
+# Test Sync Endpoint
+# Use this to manually test if the sync is working
+
+### 1. Test manual sync for employee 1
+POST http://192.168.3.39:3000/api/hr/employees/1/sync-balances
+Authorization: Bearer YOUR_HR_TOKEN_HERE
+Content-Type: application/json
+
+### 2. Test leave approval (replace :id with actual leave request ID)
+PUT http://192.168.3.39:3000/api/hr/leave-requests/21/status
+Authorization: Bearer YOUR_HR_TOKEN_HERE
+Content-Type: application/json
+
+{
+  "status": "APPROVED"
+}
+
+### 3. Test leave rejection
+PUT http://192.168.3.39:3000/api/hr/leave-requests/21/status
+Authorization: Bearer YOUR_HR_TOKEN_HERE
+Content-Type: application/json
+
+{
+  "status": "REJECTED",
+  "rejection_reason": "Testing rejection"
+}
+
+### 4. Check employee balances
+GET http://192.168.3.39:3000/api/hr/employees/1/balances
+Authorization: Bearer YOUR_HR_TOKEN_HERE
