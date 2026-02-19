@@ -107,7 +107,7 @@ export default function LeaveHistoryScreen({ navigation, route }) {
           entitled: totalEntitled,
           taken: totalUsed,
           balance: totalRemaining
-        });
+});
       }
     } catch (error) {
       console.error('Error fetching balances:', error);

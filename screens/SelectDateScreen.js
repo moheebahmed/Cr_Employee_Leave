@@ -29,7 +29,6 @@ export default function SelectDateScreen({ navigation, route }) {
     console.log('API Data (min_notice_days):', leaveType.min_notice_days);
 
     // States
-    const [currentStep, setCurrentStep] = useState(2);
     const [startDate, setStartDate] = useState(null);
     const [endDate, setEndDate] = useState(null);
     const [markedDates, setMarkedDates] = useState({});
@@ -330,22 +329,22 @@ export default function SelectDateScreen({ navigation, route }) {
                 <View style={[styles.stepLine, styles.stepLineActive]} />
 
                 <View style={styles.stepWrapper}>
-                    <View style={[styles.stepCircle, styles.stepActive]}>
+                    <View style={[styles.stepCircle, (startDate && endDate) && styles.stepActive]}>
                         <Text style={styles.stepNumber}>2</Text>
                     </View>
-                    <Text style={[styles.stepLabel, styles.stepLabelActive]}>
-                        DATE
+                    <Text style={[styles.stepLabel, (startDate && endDate) && styles.stepLabelActive]}>
+                        DATES
                     </Text>
                 </View>
 
-                <View style={[styles.stepLine]} />
+                <View style={[styles.stepLine, (startDate && endDate) && styles.stepLineActive]} />
 
                 <View style={styles.stepWrapper}>
                     <View style={[styles.stepCircle]}>
                         <Text style={styles.stepNumber}>3</Text>
                     </View>
                     <Text style={styles.stepLabel}>
-                        DETAILS
+                        REVIEW
                     </Text>
                 </View>
             </View>

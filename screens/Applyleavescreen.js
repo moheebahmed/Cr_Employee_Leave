@@ -14,7 +14,6 @@ import { API_BASE_URL } from '../constants/config';
 
 export default function ApplyLeaveScreen({ navigation, route }) {
     const [selectedLeave, setSelectedLeave] = useState(null);
-    const [currentStep, setCurrentStep] = useState(1);
     const [leaveTypes, setLeaveTypes] = useState([]);
     const [loading, setLoading] = useState(true);
 
@@ -199,32 +198,32 @@ export default function ApplyLeaveScreen({ navigation, route }) {
             {/* Progress Stepper */}
             <View style={styles.stepperContainer}>
                 <View style={styles.stepWrapper}>
-                    <View style={[styles.stepCircle, currentStep >= 1 && styles.stepActive]}>
+                    <View style={[styles.stepCircle, selectedLeave && styles.stepActive]}>
                         <Text style={styles.stepNumber}>1</Text>
                     </View>
-                    <Text style={[styles.stepLabel, currentStep >= 1 && styles.stepLabelActive]}>
+                    <Text style={[styles.stepLabel, selectedLeave && styles.stepLabelActive]}>
                         TYPE
                     </Text>
                 </View>
 
-                <View style={[styles.stepLine, currentStep >= 2 && styles.stepLineActive]} />
+                <View style={[styles.stepLine, selectedLeave && styles.stepLineActive]} />
 
                 <View style={styles.stepWrapper}>
-                    <View style={[styles.stepCircle, currentStep >= 2 && styles.stepActive]}>
+                    <View style={[styles.stepCircle]}>
                         <Text style={styles.stepNumber}>2</Text>
                     </View>
-                    <Text style={[styles.stepLabel, currentStep >= 2 && styles.stepLabelActive]}>
+                    <Text style={styles.stepLabel}>
                         DATE
                     </Text>
                 </View>
 
-                <View style={[styles.stepLine, currentStep >= 3 && styles.stepLineActive]} />
+                <View style={[styles.stepLine]} />
 
                 <View style={styles.stepWrapper}>
-                    <View style={[styles.stepCircle, currentStep >= 3 && styles.stepActive]}>
+                    <View style={[styles.stepCircle]}>
                         <Text style={styles.stepNumber}>3</Text>
                     </View>
-                    <Text style={[styles.stepLabel, currentStep >= 3 && styles.stepLabelActive]}>
+                    <Text style={styles.stepLabel}>
                         DETAILS
                     </Text>
                 </View>
@@ -381,6 +380,9 @@ const styles = StyleSheet.create({
         marginBottom: 6,
     },
     stepActive: {
+        backgroundColor: '#ff5722',
+    },
+    stepCompleted: {
         backgroundColor: '#ff5722',
     },
     stepNumber: {

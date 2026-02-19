@@ -164,9 +164,12 @@ export default function LoginScreen({ navigation }) {
                                 placeholder="••••••••"
                                 placeholderTextColor="#94a3b8"
                                 secureTextEntry={!showPassword}
-                                style={[styles.input, isDarkMode && { color: '#FFF' }]}
+                                style={[styles.input, { color: isDarkMode ? '#FFF' : '#1e293b' }]}
                                 value={password}
                                 onChangeText={setPassword}
+                                autoCorrect={false}
+                                autoCapitalize="none"
+                                textContentType="password"
                             />
                             <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
                                 <Feather

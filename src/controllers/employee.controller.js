@@ -38,7 +38,7 @@ const updateProfile = async (req, res, next) => {
 	}
 };
 
-// Get leave balances for the authenticated employee (with real-time calculation)
+// Get leave balances for the authenticated employee (uses database values updated by trigger)
 const getLeaveBalances = async (req, res, next) => {
 	try {
 		const userId = req.user?.id;
@@ -49,40 +49,25 @@ const getLeaveBalances = async (req, res, next) => {
 
 		const balances = await LeaveBalance.findAll({
 			where: { employee_id: employee.id },
-			include: [{ model: LeaveType }]
+			attributes: ['id', 'employee_id', 'leave_type_id', 'total_allowed', 'used', 'remaining', 'updated_at'],
+			include: [{ 
+				model: LeaveType,
+				attributes: ['id', 'code', 'name', 'min_notice_days', 'allow_past_dates', 'created_at']
+			}],
+			raw: false,
+			nest: true
 		});
 
-		// Calculate real-time 'used' and 'remaining' from APPROVED leaves
-		const balancesWithRealTimeData = await Promise.all(
-			balances.map(async (balance) => {
-				// Get all APPROVED leaves for this leave type
-				const approvedLeaves = await LeaveRequest.findAll({
-					where: {
-						employee_id: employee.id,
-						leave_type_id: balance.leave_type_id,
-						status: 'APPROVED'
-					}
-				});
+		const balancesData = balances.map(balance => {
+			const data = balance.get({ plain: true });
+			return data;
+		});
 
-				// Calculate total used days
-				const realUsed = approvedLeaves.reduce((sum, leave) => sum + leave.total_days, 0);
-				const realRemaining = balance.total_allowed - realUsed;
+		console.log('📊 Leave balances fetched:', JSON.stringify(balancesData, null, 2));
 
-				console.log(`Leave Type ${balance.leave_type_id}: Allowed=${balance.total_allowed}, Used=${realUsed}, Remaining=${realRemaining}`);
-
-				// Return balance with real-time calculated values
-				return {
-					...balance.toJSON(),
-					used: realUsed,
-					remaining: realRemaining
-				};
-			})
-		);
-
-		console.log('📊 Total balances calculated:', balancesWithRealTimeData.length);
-
-		return successResponse(res, 'Leave balances fetched', { balances: balancesWithRealTimeData });
+		return successResponse(res, 'Leave balances fetched', { balances: balancesData });
 	} catch (err) {
+		console.error('❌ Error fetching balances:', err);
 		next(err);
 	}
 };
@@ -100,39 +85,31 @@ const getDashboard = async (req, res, next) => {
 		if (!employee) return errorResponse(res, 'Employee profile not found', 404);
 
 		const [balances, requests] = await Promise.all([
-			LeaveBalance.findAll({ where: { employee_id: employee.id }, include: [{ model: LeaveType }] }),
+			LeaveBalance.findAll({ 
+				where: { employee_id: employee.id },
+				attributes: ['id', 'employee_id', 'leave_type_id', 'total_allowed', 'used', 'remaining', 'updated_at'],
+				include: [{ 
+					model: LeaveType,
+					attributes: ['id', 'code', 'name', 'min_notice_days', 'allow_past_dates', 'created_at']
+				}],
+				raw: false,
+				nest: true
+			}),
 			LeaveRequest.findAll({ where: { employee_id: employee.id }, limit: 5, order: [['applied_at', 'DESC']] })
 		]);
 
-		// Calculate real-time 'used' and 'remaining' from APPROVED leaves
-		const balancesWithRealTimeData = await Promise.all(
-			balances.map(async (balance) => {
-				// Get all APPROVED leaves for this leave type
-				const approvedLeaves = await LeaveRequest.findAll({
-					where: {
-						employee_id: employee.id,
-						leave_type_id: balance.leave_type_id,
-						status: 'APPROVED'
-					}
-				});
-
-				// Calculate total used days
-				const realUsed = approvedLeaves.reduce((sum, leave) => sum + leave.total_days, 0);
-				const realRemaining = balance.total_allowed - realUsed;
-
-				// Return balance with real-time calculated values
-				return {
-					...balance.toJSON(),
-					used: realUsed,
-					remaining: realRemaining
-				};
-			})
-		);
+		const balancesData = balances.map(balance => {
+			const data = balance.get({ plain: true });
+			return data;
+		});
 
 		const holidays = await getUpcoming(2); // Show only 2 holidays
 
-		return successResponse(res, 'Dashboard data', { profile: employee, balances: balancesWithRealTimeData, recent_requests: requests, upcoming_holidays: holidays });
+		console.log('📊 Dashboard balances:', JSON.stringify(balancesData, null, 2));
+
+		return successResponse(res, 'Dashboard data', { profile: employee, balances: balancesData, recent_requests: requests, upcoming_holidays: holidays });
 	} catch (err) {
+		console.error('❌ Error fetching dashboard:', err);
 		next(err);
 	}
 };

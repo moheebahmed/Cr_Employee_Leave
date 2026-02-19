@@ -258,25 +258,25 @@ export default function LeaveDetailScreen({ navigation, route }) {
                     <View style={[styles.stepCircle, styles.stepCompleted]}>
                         <Ionicons name="checkmark" size={16} color="#FFF" />
                     </View>
-                    <Text style={styles.stepLabelCompleted}>TYPE</Text>
+                    <Text style={[styles.stepLabel, styles.stepLabelActive]}>TYPE</Text>
                 </View>
 
-                <View style={[styles.stepLine, styles.stepLineCompleted]} />
+                <View style={[styles.stepLine, styles.stepLineActive]} />
 
                 <View style={styles.stepWrapper}>
                     <View style={[styles.stepCircle, styles.stepCompleted]}>
                         <Ionicons name="checkmark" size={16} color="#FFF" />
                     </View>
-                    <Text style={styles.stepLabelCompleted}>DATE</Text>
+                    <Text style={[styles.stepLabel, styles.stepLabelActive]}>DATES</Text>
                 </View>
 
-                <View style={[styles.stepLine, styles.stepLineCompleted]} />
+                <View style={[styles.stepLine, reason.trim() && styles.stepLineActive]} />
 
                 <View style={styles.stepWrapper}>
-                    <View style={[styles.stepCircle, styles.stepActive]}>
-                        <Text style={styles.stepNumberActive}>3</Text>
+                    <View style={[styles.stepCircle, reason.trim() && styles.stepActive]}>
+                        <Text style={styles.stepNumber}>3</Text>
                     </View>
-                    <Text style={[styles.stepLabel, styles.stepLabelActive]}>DETAILS</Text>
+                    <Text style={[styles.stepLabel, reason.trim() && styles.stepLabelActive]}>CONFIRM</Text>
                 </View>
             </View>
 
@@ -435,7 +435,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
-        paddingVertical: 24,
+        paddingVertical: 20,
         paddingHorizontal: 30,
         backgroundColor: '#0a0a0a',
     },
@@ -443,13 +443,13 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     stepCircle: {
-        width: 36,
-        height: 36,
-        borderRadius: 18,
+        width: 32,
+        height: 32,
+        borderRadius: 16,
         backgroundColor: '#2d2d2d',
         justifyContent: 'center',
         alignItems: 'center',
-        marginBottom: 8,
+        marginBottom: 6,
     },
     stepActive: {
         backgroundColor: '#ff5722',
@@ -457,13 +457,13 @@ const styles = StyleSheet.create({
     stepCompleted: {
         backgroundColor: '#ff5722',
     },
-    stepNumberActive: {
-        fontSize: 16,
+    stepNumber: {
+        fontSize: 14,
         fontWeight: '700',
         color: '#FFF',
     },
     stepLabel: {
-        fontSize: 10,
+        fontSize: 9,
         fontWeight: '600',
         color: '#6b7280',
         letterSpacing: 0.5,
@@ -471,20 +471,14 @@ const styles = StyleSheet.create({
     stepLabelActive: {
         color: '#ff5722',
     },
-    stepLabelCompleted: {
-        fontSize: 10,
-        fontWeight: '600',
-        color: '#ff5722',
-        letterSpacing: 0.5,
-    },
     stepLine: {
-        width: 50,
+        width: 70,
         height: 2,
         backgroundColor: '#2d2d2d',
-        marginHorizontal: 8,
-          marginBottom: 0,
+        marginHorizontal: 4,
+        marginBottom: 0,
     },
-    stepLineCompleted: {
+    stepLineActive: {
         backgroundColor: '#ff5722',
     },
     scrollView: {
