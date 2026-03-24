@@ -75,7 +75,8 @@ export default function ApplyLeaveScreen({ navigation, route }) {
                         iconLibrary: getIconLibrary(code),
                         balance: item.remaining,
                         disabled: item.remaining <= 0,
-                        leaveTypeCode: code
+                        leaveTypeCode: code,
+                        min_notice_days: lt.min_notice_days ?? 0,
                     };
                 });
 

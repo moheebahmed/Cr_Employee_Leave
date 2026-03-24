@@ -174,6 +174,23 @@ export default function SettingsScreen({ navigation }) {
             </View>
         </View> */}
 
+        {/* Admin Portal Button (Only for HR) */}
+        {(profile?.User?.role === 'HR' || profile?.User?.role === 'ADMIN') && (
+          <TouchableOpacity
+            style={styles.adminPortalBtn}
+            onPress={() => navigation.navigate('AdminPortal')}
+          >
+            <View style={styles.adminPortalContent}>
+              <MaterialIcons name="admin-panel-settings" size={24} color="#ff5722" />
+              <View style={styles.adminPortalText}>
+                <Text style={styles.adminPortalTitle}>Admin Portal</Text>
+                <Text style={styles.adminPortalSubtitle}>Manage employee leave balances</Text>
+              </View>
+            </View>
+            <Ionicons name="chevron-forward" size={24} color="#9ca3af" />
+          </TouchableOpacity>
+        )}
+
         {/* Logout */}
         <TouchableOpacity
           style={styles.logoutBtn}
@@ -310,5 +327,40 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: '700',
+  },
+
+  adminPortalBtn: {
+    backgroundColor: '#1a1a1a',
+    marginHorizontal: 20,
+    marginTop: 20,
+    borderRadius: 12,
+    padding: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderWidth: 1,
+    borderColor: '#2d2d2d',
+  },
+
+  adminPortalContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+
+  adminPortalText: {
+    flex: 1,
+  },
+
+  adminPortalTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#fff',
+    marginBottom: 2,
+  },
+
+  adminPortalSubtitle: {
+    fontSize: 13,
+    color: '#9ca3af',
   },
 });

@@ -23,6 +23,20 @@ export default function LoginScreen({ navigation }) {
     const [remember, setRemember] = useState(false);
     const [isDarkMode, setIsDarkMode] = useState(false);
 
+    // Clear old tokens on component mount
+    React.useEffect(() => {
+        const clearOldTokens = async () => {
+            try {
+                await AsyncStorage.removeItem('userToken');
+                await AsyncStorage.removeItem('userData');
+                console.log('Old tokens cleared');
+            } catch (error) {
+                console.error('Error clearing tokens:', error);
+            }
+        };
+        clearOldTokens();
+    }, []);
+
     const handleLogin = async () => {
         if (!email || !password) {
             alert('Please enter email and password');

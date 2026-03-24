@@ -46,7 +46,7 @@ export default function LeaveHistoryScreen({ navigation, route }) {
         }
         setToken(finalToken);
 
-        await Promise.all([
+    await Promise.all([
           fetchLeaveBalances(finalToken),
           fetchLeaveHistory(finalToken)
         ]);
@@ -73,41 +73,39 @@ export default function LeaveHistoryScreen({ navigation, route }) {
   const fetchLeaveBalances = async (authToken) => {
     try {
       console.log('🔄 Fetching Leave Balances...');
-      const response = await fetch(`${API_BASE_URL}/employee/me/balances`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${authToken}`
-        }
-      });
+      const [balancesRes, requestsRes] = await Promise.all([
+        fetch(`${API_BASE_URL}/employee/me/balances`, {
+          method: 'GET',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` }
+        }),
+        fetch(`${API_BASE_URL}/employee/leave/requests`, {
+          method: 'GET',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` }
+        })
+      ]);
 
-      const data = await response.json();
+      const balancesData = await balancesRes.json();
+      const requestsData = await requestsRes.json();
 
-      if (response.ok && data.success) {
-        const balances = data.data.balances || [];
+      if (balancesRes.ok && balancesData.success) {
+        const balances = balancesData.data.balances || [];
+        const requests = (requestsData.success && requestsData.data.requests) || [];
 
-        console.log('📊 Leave Balances Data:', balances);
+        // Calculate actual taken from APPROVED leave requests (sum of total_days)
+        const actualTaken = requests
+          .filter(r => r.status === 'APPROVED')
+          .reduce((sum, r) => sum + (r.total_days || 0), 0);
 
-        // Calculate Totals
-        let totalEntitled = 0;
-        let totalUsed = 0;
-        let totalRemaining = 0;
+        const totalEntitled = balances.reduce((sum, b) => sum + (b.total_allowed || 0), 0);
+        const totalRemaining = totalEntitled - actualTaken;
 
-        balances.forEach(b => {
-          console.log(`  ${b.LeaveType?.name}: Entitled=${b.total_allowed}, Used=${b.used}, Remaining=${b.remaining}`);
-          totalEntitled += (b.total_allowed || 0);
-          totalUsed += (b.used || 0);
-          totalRemaining += (b.remaining || 0);
-        });
-
-        console.log('📈 Totals: Entitled=' + totalEntitled + ', Taken=' + totalUsed + ', Balance=' + totalRemaining);
-        console.log('✅ Verification: ' + totalEntitled + ' - ' + totalUsed + ' = ' + (totalEntitled - totalUsed) + ' (should equal ' + totalRemaining + ')');
+        console.log('📈 Totals: Entitled=' + totalEntitled + ', Taken=' + actualTaken + ', Balance=' + totalRemaining);
 
         setStats({
           entitled: totalEntitled,
-          taken: totalUsed,
+          taken: actualTaken,
           balance: totalRemaining
-});
+        });
       }
     } catch (error) {
       console.error('Error fetching balances:', error);

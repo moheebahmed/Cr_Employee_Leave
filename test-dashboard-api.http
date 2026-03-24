@@ -1,0 +1,9 @@
+### Test Dashboard API
+GET https://leave-management.conceptrecall.com/api/employee/dashboard
+Authorization: Bearer YOUR_TOKEN_HERE
+Content-Type: application/json
+
+### Test Leave Balances API
+GET https://leave-management.conceptrecall.com/api/employee/me/balances
+Authorization: Bearer YOUR_TOKEN_HERE
+Content-Type: application/json

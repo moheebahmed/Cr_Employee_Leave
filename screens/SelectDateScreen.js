@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useMemo } from 'react';'react';
 import {
     View,
     Text,
@@ -38,34 +38,30 @@ export default function SelectDateScreen({ navigation, route }) {
     const [hasPendingLeaves, setHasPendingLeaves] = useState(false); // NEW: Track pending leaves
     const [pendingLeaveDetails, setPendingLeaveDetails] = useState(null); // NEW: Store pending leave info
 
-    const getMinDateBasedOnNotice = () => {
+    // ✅ FIX 1: useMemo se minDate sirf leaveType change hone pe recalculate hoga
+    const minDate = useMemo(() => {
         let daysToAdd = 0;
 
         if (leaveType.min_notice_days !== undefined && leaveType.min_notice_days !== null) {
             daysToAdd = leaveType.min_notice_days;
         } else {
             const title = (leaveType.title || '').toLowerCase();
-
-            if (title.includes('annual')) {
-                daysToAdd = 15;
-            } else if (title.includes('hajj')) {
-                daysToAdd = 30;
-            } else if (title.includes('casual')) {
-                daysToAdd = 1;
-            } else if (title.includes('paternity')) {
-                daysToAdd = 7;
-            } else {
-                daysToAdd = 0; // Default (Sick Leave etc.)
-            }
-
-            // console.log('⚠️ API Data Missing. Using Fallback Logic ->', daysToAdd, 'days');
+            if (title.includes('annual')) daysToAdd = 15;
+            else if (title.includes('hajj')) daysToAdd = 30;
+            else if (title.includes('casual')) daysToAdd = 1;
+            else if (title.includes('paternity')) daysToAdd = 7;
+            else daysToAdd = 0;
         }
 
         const date = new Date();
         date.setDate(date.getDate() + daysToAdd);
-        console.log('📅 Min Date Set to:', date.toISOString().split('T')[0]);
-        return date.toISOString().split('T')[0];
-    };
+        const result = date.toISOString().split('T')[0];
+        console.log('📅 Min Date Set to:', result);
+        return result;
+    }, [leaveType.min_notice_days, leaveType.title]);
+
+    // ✅ FIX 2: Calendar minDate wale month pe open ho (e.g. Hajj = April, Annual = next week)
+    const [calendarCurrentDate, setCalendarCurrentDate] = useState(minDate);
 
     // ✅ Check token
     useEffect(() => {
@@ -190,7 +186,8 @@ export default function SelectDateScreen({ navigation, route }) {
 
       if (startDate && endDate) {
         const dayCount = getDatesInRange(startDate, endDate).length;
-        console.log('API Days:', data.data.total_days, ' -> Corrected Local Days:', dayCount);
+        const apiDays = data?.data?.total_days;
+        console.log('API Days:', apiDays, ' -> Corrected Local Days:', dayCount);
         setTotalDuration(dayCount);
       } else {
         setTotalDuration(0);
@@ -402,8 +399,9 @@ export default function SelectDateScreen({ navigation, route }) {
 
                 {/* Calendar */}
                 <View style={styles.calendarContainer}>
+                    {/* ✅ FIX 3: calendarTitle timezone-safe parsing */}
                     <Text style={styles.calendarTitle}>
-                        {startDate ? new Date(startDate).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) : 'Select Dates'}
+                        {startDate ? new Date(startDate + 'T00:00:00').toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) : 'Select Dates'}
                     </Text>
 
                     {/* Pending Leave Warning */}
@@ -433,12 +431,11 @@ export default function SelectDateScreen({ navigation, route }) {
                             textMonthFontWeight: '700',
                             textDayHeaderFontWeight: '600',
                         }}
-                        current={startDate || new Date().toISOString().split('T')[0]}
+                        current={calendarCurrentDate}
                         markedDates={markedDates}
                         markingType={'period'}
-
-
-                        minDate={getMinDateBasedOnNotice()}
+                        minDate={minDate}
+                        onMonthChange={(month) => setCalendarCurrentDate(month.dateString)}
 
                         hideExtraDays={true}
                         enableSwipeMonths={true}

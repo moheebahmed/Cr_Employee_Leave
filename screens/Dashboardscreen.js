@@ -50,19 +50,43 @@ export default function DashboardScreen({ navigation, route }) {
     if (!token) return;
 
     try {
-      setLoading(true); // Show loading when refreshing
-      const response = await fetch(`${API_BASE_URL}/employee/dashboard`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      const data = await response.json();
-      if (response.ok) {
-        setDashboardData(data.data);
+      setLoading(true);
+      const [dashRes, requestsRes] = await Promise.all([
+        fetch(`${API_BASE_URL}/employee/dashboard`, {
+          method: 'GET',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }
+        }),
+        fetch(`${API_BASE_URL}/employee/leave/requests`, {
+          method: 'GET',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }
+        })
+      ]);
+
+      const data = await dashRes.json();
+      const requestsData = await requestsRes.json();
+
+      if (dashRes.ok) {
+        const requests = (requestsData.success && requestsData.data.requests) || [];
+
+        // Fix used count: sum total_days from APPROVED requests per leave type
+        const usedByType = {};
+        requests
+          .filter(r => r.status === 'APPROVED')
+          .forEach(r => {
+            const id = r.leave_type_id;
+            usedByType[id] = (usedByType[id] || 0) + (r.total_days || 0);
+          });
+
+        // Patch balances with correct used & remaining
+        const patchedBalances = (data.data?.balances || []).map(b => ({
+          ...b,
+          used: usedByType[b.leave_type_id] || 0,
+          remaining: b.total_allowed - (usedByType[b.leave_type_id] || 0),
+        }));
+
+        setDashboardData({ ...data.data, balances: patchedBalances });
       } else {
-        console.log('Dashboard fetch failed:', data.message);
+        console.log('Dashboard fetch failed:', JSON.stringify(data, null, 2));
         Alert.alert('Error', data.message || 'Failed to load dashboard');
       }
     } catch (error) {
