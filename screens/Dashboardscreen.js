@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
 import {
   View,
   Text,
@@ -66,6 +67,7 @@ export default function DashboardScreen({ navigation, route }) {
       const requestsData = await requestsRes.json();
 
       if (dashRes.ok) {
+        console.log('📊 Dashboard balances raw:', JSON.stringify(data.data?.balances, null, 2));
         const requests = (requestsData.success && requestsData.data.requests) || [];
 
         // Fix used count: sum total_days from APPROVED requests per leave type
@@ -77,11 +79,10 @@ export default function DashboardScreen({ navigation, route }) {
             usedByType[id] = (usedByType[id] || 0) + (r.total_days || 0);
           });
 
-        // Patch balances with correct used & remaining
+        // Use backend remaining directly, only patch used from APPROVED requests
         const patchedBalances = (data.data?.balances || []).map(b => ({
           ...b,
           used: usedByType[b.leave_type_id] || 0,
-          remaining: b.total_allowed - (usedByType[b.leave_type_id] || 0),
         }));
 
         setDashboardData({ ...data.data, balances: patchedBalances });
@@ -103,6 +104,15 @@ export default function DashboardScreen({ navigation, route }) {
       fetchDashboardData();
     }
   }, [token, fetchDashboardData]);
+
+  // 4. Auto-refresh when screen comes into focus (e.g. after applying leave)
+  useFocusEffect(
+    useCallback(() => {
+      if (token) {
+        fetchDashboardData();
+      }
+    }, [token, fetchDashboardData])
+  );
   // Optimized navigation handler
   const handleApplyLeave = useCallback(() => {
     navigation.navigate('ApplyLeave', { token: token });
@@ -120,6 +130,7 @@ export default function DashboardScreen({ navigation, route }) {
   const user = profile?.User || initialUser || {};
   const balances = dashboardData?.balances || [];
   const upcomingHolidays = dashboardData?.upcoming_holidays || [];
+  const hasAnyBalance = balances.some(b => (b.remaining || 0) > 0);
 
   return (
     <View style={styles.container}>
@@ -247,12 +258,14 @@ export default function DashboardScreen({ navigation, route }) {
         <View style={{ height: 100 }} />
       </ScrollView>
       {/* Floating Action Button */}
-      <TouchableOpacity
-        style={styles.fab}
-        onPress={() => navigation.navigate('ApplyLeave', { token: token })}
-      >
-        <Feather name="plus" size={28} color="#FFF" />
-      </TouchableOpacity>
+      {hasAnyBalance && (
+        <TouchableOpacity
+          style={styles.fab}
+          onPress={() => navigation.navigate('ApplyLeave', { token: token })}
+        >
+          <Feather name="plus" size={28} color="#FFF" />
+        </TouchableOpacity>
+      )}
       {/* Bottom Navigation */}
 
       <BottomNav navigation={navigation} active="Dashboard" token={token} />

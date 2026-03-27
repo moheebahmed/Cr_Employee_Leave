@@ -16,6 +16,8 @@ export default function ApplyLeaveScreen({ navigation, route }) {
     const [selectedLeave, setSelectedLeave] = useState(null);
     const [leaveTypes, setLeaveTypes] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [hasPendingLeave, setHasPendingLeave] = useState(false);
+    const [pendingCount, setPendingCount] = useState(0);
 
     const token = route?.params?.token;
 
@@ -33,6 +35,27 @@ export default function ApplyLeaveScreen({ navigation, route }) {
 
         fetchLeaveTypes();
     }, [token]);
+
+    // Check pending leaves
+    const checkPendingLeaves = async () => {
+        try {
+            const response = await fetch(`${API_BASE_URL}/employee/leave/requests`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            const data = await response.json();
+            if (response.ok && data.success) {
+                const pending = (data.data.requests || []).filter(r => r.status === 'PENDING');
+                setHasPendingLeave(pending.length > 0);
+                setPendingCount(pending.length);
+            }
+        } catch (e) {
+            console.error('Pending check error:', e);
+        }
+    };
 
     //   API Call
     const fetchLeaveTypes = async () => {
@@ -82,6 +105,7 @@ export default function ApplyLeaveScreen({ navigation, route }) {
 
                 console.log(' Formatted Data:', formatted);
                 setLeaveTypes(formatted);
+                await checkPendingLeaves();
 
             } else {
                 // console.log('API Error:', data.message);
@@ -142,6 +166,14 @@ export default function ApplyLeaveScreen({ navigation, route }) {
     };
 
     const handleNext = () => {
+        if (hasPendingLeave) {
+            Alert.alert(
+                'Cannot Apply Leave',
+                `You have ${pendingCount} pending leave request(s). Please wait for approval or rejection before applying for new leave.`,
+                [{ text: 'OK' }]
+            );
+            return;
+        }
         if (selectedLeave) {
             console.log('✓ Selected leave:', selectedLeave.title);
             navigation.navigate('SelectDate', {
@@ -241,6 +273,16 @@ export default function ApplyLeaveScreen({ navigation, route }) {
                     </Text>
                 </View>
 
+                {/* Pending Leave Warning */}
+                {hasPendingLeave && (
+                    <View style={styles.pendingWarning}>
+                        <Ionicons name="warning" size={20} color="#ff9500" />
+                        <Text style={styles.pendingWarningText}>
+                            You have {pendingCount} pending leave request(s). Cannot apply for new leave until existing requests are processed.
+                        </Text>
+                    </View>
+                )}
+
                 {/* Leave Cards */}
                 <View style={styles.leaveTypesContainer}>
                     {leaveTypes.length > 0 ? (
@@ -314,10 +356,10 @@ export default function ApplyLeaveScreen({ navigation, route }) {
                 <TouchableOpacity
                     style={[
                         styles.nextButton,
-                        !selectedLeave && styles.nextButtonDisabled
+                        (!selectedLeave || hasPendingLeave) && styles.nextButtonDisabled
                     ]}
                     onPress={handleNext}
-                    disabled={!selectedLeave}
+                    disabled={!selectedLeave || hasPendingLeave}
                 >
                     <Text style={styles.nextButtonText}>Next Step</Text>
                     <Feather name="arrow-right" size={20} color="#FFF" style={{ marginLeft: 8 }} />
@@ -545,6 +587,24 @@ const styles = StyleSheet.create({
     nextButtonDisabled: {
         backgroundColor: '#2d2d2d',
         opacity: 0.5,
+    },
+    pendingWarning: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#2a1f0a',
+        padding: 12,
+        borderRadius: 10,
+        marginBottom: 12,
+        borderWidth: 1,
+        borderColor: '#ff9500',
+    },
+    pendingWarningText: {
+        color: '#ff9500',
+        fontSize: 13,
+        fontWeight: '600',
+        marginLeft: 8,
+        flex: 1,
+        lineHeight: 18,
     },
     nextButtonText: {
         fontSize: 15,
